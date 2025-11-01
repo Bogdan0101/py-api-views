@@ -1,11 +1,12 @@
 from rest_framework.response import Response
 from rest_framework import status, generics, mixins, viewsets
 from rest_framework.views import APIView
-
 from django.shortcuts import get_object_or_404
-
 from cinema.models import Movie, Genre, Actor, CinemaHall
-from cinema.serializers import MovieSerializer, GenreSerializer, ActorSerializer, CinemaHallSerializer
+from cinema.serializers import (MovieSerializer,
+                                GenreSerializer,
+                                ActorSerializer,
+                                CinemaHallSerializer)
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -18,12 +19,14 @@ class CinemaHallViewSet(mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
                         mixins.UpdateModelMixin,
                         mixins.DestroyModelMixin,
-                        viewsets.GenericViewSet,):
+                        viewsets.GenericViewSet, ):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
-class ActorList(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
+class ActorList(generics.GenericAPIView,
+                mixins.ListModelMixin,
+                mixins.CreateModelMixin):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
@@ -37,7 +40,8 @@ class ActorList(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateMod
 class ActorDetail(generics.GenericAPIView,
                   mixins.RetrieveModelMixin,
                   mixins.UpdateModelMixin,
-                  mixins.DestroyModelMixin, ):
+                  mixins.DestroyModelMixin,
+                  ):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
@@ -46,6 +50,9 @@ class ActorDetail(generics.GenericAPIView,
 
     def put(self, request, *args, **kwargs) -> Response:
         return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs) -> Response:
+        return self.partial_update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs) -> Response:
         return self.destroy(request, *args, **kwargs)
@@ -74,6 +81,14 @@ class GenreDetail(APIView):
 
     def put(self, request, pk: int) -> Response:
         serializer = GenreSerializer(self.get_object(pk=pk), data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk: int) -> Response:
+        serializer = GenreSerializer(self.get_object(pk=pk),
+                                     data=request.data,
+                                     partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
